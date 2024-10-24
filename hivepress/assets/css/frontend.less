@@ -195,15 +195,6 @@
 			}
 		}
 
-		&--checkbox&--readonly {
-			pointer-events: none;
-
-			input[type="checkbox"]:checked+span::before {
-				background-color: #ccc;
-				border-color: #ccc;
-			}
-		}
-
 		&--date,
 		&--time {
 			display: flex;
@@ -726,6 +717,10 @@
 
 				&[data-zoom^="http"] {
 					cursor: pointer;
+				}
+
+				.wp-block &:not(:first-child) {
+					display: none;
 				}
 			}
 		}
