@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the HivePress plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: HivePress 1.7.11\n"
+"Project-Id-Version: HivePress 1.7.12\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-04-14T16:21:52+00:00\n"
+"POT-Creation-Date: 2025-04-29T18:47:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: hivepress\n"
@@ -333,7 +333,7 @@ msgstr ""
 msgid "Recipient"
 msgstr ""
 
-#: includes/components/class-form.php:528
+#: includes/components/class-form.php:536
 msgid "Captcha is invalid."
 msgstr ""
 
@@ -1800,12 +1800,12 @@ msgstr ""
 msgid "Radio Buttons"
 msgstr ""
 
-#: includes/fields/class-repeater.php:165
-msgid "Remove"
+#: includes/fields/class-repeater.php:42
+msgid "Add Item"
 msgstr ""
 
-#: includes/fields/class-repeater.php:175
-msgid "Add Item"
+#: includes/fields/class-repeater.php:188
+msgid "Remove"
 msgstr ""
 
 #: includes/fields/class-select.php:77
