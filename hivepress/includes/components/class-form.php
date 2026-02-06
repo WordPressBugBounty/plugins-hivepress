@@ -41,6 +41,10 @@ final class Form extends Component {
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
 
+		// Print scripts.
+		add_action( 'admin_print_footer_scripts', [ $this, 'print_scripts' ] );
+		add_action( 'wp_print_footer_scripts', [ $this, 'print_scripts' ] );
+
 		parent::__construct( $args );
 	}
 
@@ -166,13 +170,16 @@ final class Form extends Component {
 
 		if ( post_type_exists( $args['post_type'] ) ) {
 
+			// Check post type.
+			$is_default = strpos( $args['post_type'], 'hp_' ) === 0;
+
 			// Get cache group.
 			$cache_group = hivepress()->model->get_cache_group( 'post', $args['post_type'] );
 
 			// Get cached options.
 			$options = null;
 
-			if ( strpos( $args['post_type'], 'hp_' ) === 0 ) {
+			if ( $is_default ) {
 				$options = hivepress()->cache->get_cache( array_merge( $args, [ 'fields' => 'titles' ] ), $cache_group );
 			}
 
@@ -180,7 +187,7 @@ final class Form extends Component {
 				$options = wp_list_pluck( get_posts( $args ), 'post_title', 'ID' );
 
 				// Cache options.
-				if ( strpos( $args['post_type'], 'hp_' ) === 0 && count( $options ) <= 1000 ) {
+				if ( $is_default && count( $options ) <= 1000 ) {
 					hivepress()->cache->set_cache( array_merge( $args, [ 'fields' => 'titles' ] ), $cache_group, $options );
 				}
 			}
@@ -217,13 +224,16 @@ final class Form extends Component {
 
 		if ( taxonomy_exists( $args['taxonomy'] ) ) {
 
+			// Check taxonomy.
+			$is_default = strpos( $args['taxonomy'], 'hp_' ) === 0;
+
 			// Get cache group.
 			$cache_group = hivepress()->model->get_cache_group( 'term', $args['taxonomy'] );
 
 			// Get cached options.
 			$options = null;
 
-			if ( strpos( $args['taxonomy'], 'hp_' ) === 0 ) {
+			if ( $is_default ) {
 				$options = hivepress()->cache->get_cache( $args, $cache_group );
 			}
 
@@ -231,7 +241,7 @@ final class Form extends Component {
 				$options = [];
 
 				// Set custom order.
-				if ( strpos( $args['taxonomy'], 'hp_' ) === 0 && ! isset( $args['orderby'] ) && get_terms(
+				if ( $is_default && ! isset( $args['orderby'] ) && get_terms(
 					array_merge(
 						$args,
 						[
@@ -285,12 +295,21 @@ final class Form extends Component {
 				foreach ( $terms as $term ) {
 					$options[ $term->term_id ] = [
 						'label'  => $term->name,
+						'slug'   => $term->slug,
 						'parent' => $term->parent ? $term->parent : null,
 					];
+
+					if ( $is_default ) {
+
+						// Set icon.
+						$icon = get_term_meta( $term->term_id, 'hp_icon', true );
+
+						$options[ $term->term_id ]['icon'] = $icon ? $icon : null;
+					}
 				}
 
 				// Cache options.
-				if ( strpos( $args['taxonomy'], 'hp_' ) === 0 && count( $options ) <= 1000 ) {
+				if ( $is_default && count( $options ) <= 1000 ) {
 					hivepress()->cache->set_cache( $args, $cache_group, $options );
 				}
 			}
@@ -591,5 +610,32 @@ final class Form extends Component {
 				wp_script_add_data( 'recaptcha', 'defer', true );
 			}
 		}
+	}
+
+	/**
+	 * Prints scripts.
+	 */
+	public function print_scripts() {
+		$scripts = '';
+
+		// Get language.
+		$language = hivepress()->translator->get_language();
+
+		if ( ! $language ) {
+			return;
+		}
+
+		// Enqueue intlTelInput.
+		$filepath = '/node_modules/intl-tel-input/build/js/i18n/' . $language . '/index.js';
+
+		if ( file_exists( hivepress()->get_path() . $filepath ) ) {
+			$scripts = '<script type="module">
+				import language from "' . esc_url( hivepress()->get_url() . $filepath ) . '";
+
+				window.intlTelInputi18n = language;
+			</script>';
+		}
+
+		echo $scripts;
 	}
 }

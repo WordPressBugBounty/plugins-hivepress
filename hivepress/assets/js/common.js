@@ -43,6 +43,17 @@ var hivepress = {
 			}
 		});
 
+		// Image
+		container.find(hivepress.getSelector('image')).each(function () {
+			var image = $(this);
+
+			image.on('click', function () {
+				$.fancybox.open({ src: image.data('zoom') }, {
+					buttons: ['close'],
+				});
+			});
+		});
+
 		// Modal
 		container.find(hivepress.getSelector('modal')).each(function () {
 			var id = $(this).attr('id'),
@@ -59,6 +70,27 @@ var hivepress = {
 					e.preventDefault();
 				});
 			}
+		});
+
+		// Copy
+		container.find(hivepress.getSelector('copy')).each(function () {
+			var element = $(this);
+
+			element.on('click', function () {
+				var input = $('<input type="text">');
+
+				input.appendTo($('body')).val(element.text()).select();
+
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(element.text()).catch(() => {
+						document.execCommand('copy');
+					});
+				} else {
+					document.execCommand('copy');
+				}
+
+				input.remove();
+			});
 		});
 
 		// Number
@@ -81,6 +113,20 @@ var hivepress = {
 					e.preventDefault();
 				}
 			});
+
+			if (field.data('mode') === 'range' && field.is(':visible')) {
+				field.wrap('<div class="' + field.attr('class').split(' ')[0] + '--number-range" />');
+
+				$('<div />').insertAfter(field).slider({
+					min: Number(field.attr('min')),
+					max: Number(field.attr('max')),
+					value: Number(field.val()),
+
+					slide: function (e, ui) {
+						field.val(ui.value);
+					},
+				}).wrap('<div />');
+			}
 		});
 
 		// Repeater
@@ -320,9 +366,15 @@ var hivepress = {
 
 				if (field.data('render')) {
 					var container = field.closest('[data-model]'),
-						data = new FormData(field.closest('form').get(0)),
-						tinymceSettings = [],
-						tinymceIDs = [];
+						form = field.closest('form'),
+						data = new FormData(form.get(0)),
+						editors = [];
+
+					form.find(hivepress.getSelector('phone')).each(function () {
+						if (this.hasOwnProperty('_iti')) {
+							data.set($(this).data('name'), this._iti.getNumber());
+						}
+					});
 
 					data.append('_id', container.data('id'));
 					data.append('_model', container.data('model'));
@@ -340,13 +392,22 @@ var hivepress = {
 							xhr.setRequestHeader('X-WP-Nonce', hivepressCoreData.apiNonce);
 
 							if (typeof tinyMCE !== 'undefined') {
-								$.each(tinymce.editors, function (index, configs) {
-									tinymceSettings.push(configs.settings);
-									tinymceIDs.push(configs.id);
+								$.each(tinymce.editors, function (index, editor) {
+									if (container.has(editor.targetElm).length) {
+										editors.push({
+											id: editor.id,
+											settings: editor.settings,
+											content: editor.getContent(),
+										});
+									}
 								});
 
-								$.each(tinymceIDs, function (index, id) {
-									tinymce.remove('#' + id);
+								$.each(editors, function (index, editor) {
+									var instance = tinymce.get(editor.id);
+
+									if (instance) {
+										tinymce.remove(instance);
+									}
 								});
 							}
 						},
@@ -361,8 +422,15 @@ var hivepress = {
 								hivepress.initUI(newContainer);
 
 								if (typeof tinyMCE !== 'undefined') {
-									$.each(tinymceSettings, function (index, configs) {
-										tinymce.init(configs);
+									$.each(editors, function (index, editor) {
+										tinymce.init($.extend(editor.settings, {
+											selector: '#' + editor.id,
+											setup: function (instance) {
+												instance.on('init', function () {
+													instance.setContent(editor.content);
+												});
+											}
+										}));
 									});
 								}
 
@@ -388,25 +456,68 @@ var hivepress = {
 
 		// Phone
 		container.find(hivepress.getSelector('phone')).each(function () {
-			var field = $(this),
+			var element = $(this),
+				field = element,
+				fieldName = field.attr('name'),
 				settings = {
-					hiddenInput: field.attr('name'),
-					preferredCountries: [],
+					strictMode: true,
 					separateDialCode: true,
-					utilsScript: field.data('utils'),
+					onlyCountries: [],
+
+					loadUtils: () => import(intlTelInputData.utilsURL),
 				};
 
-			field.removeAttr('name');
-
-			if (field.data('countries')) {
-				settings['onlyCountries'] = field.data('countries');
+			if (element.data('countries')) {
+				settings['onlyCountries'] = element.data('countries');
 			}
 
-			if (field.data('country')) {
-				settings['initialCountry'] = field.data('country');
+			if (element.data('country')) {
+				settings['initialCountry'] = element.data('country');
 			}
 
-			window.intlTelInput(field.get(0), settings);
+			if (element.is('input')) {
+				$.extend(settings, {
+					i18n: window.intlTelInputi18n,
+
+					hiddenInput: (telInputName) => ({
+						phone: fieldName,
+					}),
+				});
+
+				field.data('name', fieldName);
+				field.removeAttr('name');
+			} else {
+				field = $('<input>');
+
+				field.val(element.text());
+			}
+
+			try {
+				var iti = window.intlTelInput(field.get(0), settings);
+			} catch (error) {
+				field.siblings('input[name="' + fieldName + '"]').remove();
+
+				field.attr('name', fieldName);
+
+				return;
+			}
+
+			if (element.is('input')) {
+				this._iti = iti;
+			} else {
+				iti.promise.then(() => {
+					var formattedNumber = field.val(),
+						countryData = iti.getSelectedCountryData();
+
+					if (settings.onlyCountries.length !== 1 && countryData && countryData.dialCode) {
+						formattedNumber = '+' + countryData.dialCode + ' ' + formattedNumber;
+					}
+
+					element.text(formattedNumber);
+
+					iti.destroy();
+				});
+			}
 		});
 
 		// Date
@@ -850,26 +961,44 @@ var hivepress = {
 				});
 		});
 
-		// Interval
+		// Render
 		container.find('[data-render]').each(function () {
-			var renderSettings = $(this).data('render');
+			var element = $(this),
+				renderSettings = element.data('render');
 
-			if (renderSettings && renderSettings.hasOwnProperty('interval')) {
+			if (renderSettings && !element.is('form, input, select, textarea')) {
+				var currentPage = 1,
+					maxPage = 1;
+
+				if (renderSettings.hasOwnProperty('pages')) {
+					maxPage = renderSettings.pages;
+				}
+
 				renderSettings = $.extend({ type: 'replace' }, renderSettings);
 
-				var renderInterval = setInterval(function () {
+				function renderBlock() {
 					var url = new URL(renderSettings.url),
 						container = $('[data-block=' + renderSettings.block + ']');
 
 					if (!container.length) {
-						clearInterval(renderInterval);
+						if (renderSettings.hasOwnProperty('interval')) {
+							clearInterval(renderInterval);
+						}
 
 						return;
+					}
+
+					if (element.is('button')) {
+						element.attr('data-state', 'loading');
 					}
 
 					container.attr('data-state', 'loading');
 
 					url.searchParams.set('_render', true);
+
+					if (currentPage < maxPage) {
+						url.searchParams.set('_page', currentPage + 1);
+					}
 
 					$.ajax({
 						url: url,
@@ -887,6 +1016,10 @@ var hivepress = {
 							if (typeof response !== 'undefined' && response.hasOwnProperty('data') && response.data.hasOwnProperty('html')) {
 								var newContainer = $(response.data.html);
 
+								if (element.is('button')) {
+									element.attr('data-state', '');
+								}
+
 								if ('append' === renderSettings.type) {
 									container.attr('data-state', '');
 
@@ -895,11 +1028,27 @@ var hivepress = {
 									container.replaceWith(newContainer);
 								}
 
+								if (currentPage < maxPage - 1) {
+									currentPage++;
+								} else if (maxPage > 1) {
+									element.remove();
+								}
+
 								hivepress.initUI(newContainer);
 							}
 						},
 					});
-				}, renderSettings.interval * 1000);
+				}
+
+				if (renderSettings.hasOwnProperty('interval')) {
+					var renderInterval = setInterval(renderBlock, renderSettings.interval * 1000);
+				} else {
+					element.on('click', function (e) {
+						e.preventDefault();
+
+						renderBlock();
+					});
+				}
 			}
 		});
 
@@ -988,13 +1137,13 @@ var hivepress = {
 					messageClass = messageContainer.attr('class').split(' ')[0];
 
 				form.on('submit', function (e) {
-					var formData = new FormData(form.get(0));
-
-					messageContainer.hide().html('').removeClass(messageClass + '--success ' + messageClass + '--error');
-
 					if (typeof tinyMCE !== 'undefined') {
 						tinyMCE.triggerSave();
 					}
+
+					var formData = new FormData(form.get(0));
+
+					messageContainer.hide().html('').removeClass(messageClass + '--success ' + messageClass + '--error');
 
 					if (renderSettings && renderSettings.event === 'submit') {
 						var renderContainer = $('[data-block=' + renderSettings.block + ']');

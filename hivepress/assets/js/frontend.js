@@ -33,15 +33,17 @@
 					button.attr('data-state', '');
 				}
 
-				$.ajax({
-					url: button.data('url'),
-					method: 'POST',
-					beforeSend: function (xhr) {
-						if ($('body').hasClass('logged-in')) {
-							xhr.setRequestHeader('X-WP-Nonce', hivepressCoreData.apiNonce);
-						}
-					},
-				});
+				if (button.data('url')) {
+					$.ajax({
+						url: button.data('url'),
+						method: 'POST',
+						beforeSend: function (xhr) {
+							if ($('body').hasClass('logged-in')) {
+								xhr.setRequestHeader('X-WP-Nonce', hivepressCoreData.apiNonce);
+							}
+						},
+					});
+				}
 
 				e.preventDefault();
 			});
@@ -95,6 +97,7 @@
 			container.find(hivepress.getSelector('carousel-slider')).each(function () {
 				var container = $(this),
 					images = container.find('img, video'),
+					aspectRatio = Number(container.data('aspect-ratio')),
 					url = container.data('url'),
 					isPreview = container.data('preview') !== false;
 
@@ -150,6 +153,12 @@
 							carousel.find('video').removeAttr('controls');
 							carousel.appendTo(container);
 
+							carousel.on('init', function (event, slick) {
+								if (aspectRatio) {
+									slick.$slides.css('aspect-ratio', aspectRatio);
+								}
+							});
+
 							$.extend(settings, {
 								asNavFor: carousel,
 								arrows: false,
@@ -160,6 +169,12 @@
 								nextArrow: '<div class="slick-arrow slick-next"><i class="hp-icon fas fa-chevron-right"></i></div>',
 							});
 						}
+
+						slider.on('init', function (event, slick) {
+							if (aspectRatio) {
+								slick.$slides.css('aspect-ratio', aspectRatio);
+							}
+						});
 
 						slider.addClass(containerClass + '-slider').slick(settings);
 
@@ -201,6 +216,8 @@
 							});
 						}
 					});
+				} else if (aspectRatio) {
+					container.css('aspect-ratio', aspectRatio);
 				}
 			});
 		}
@@ -218,6 +235,76 @@
 		}).observe(document, {
 			subtree: true,
 			childList: true,
+		});
+
+		// Password
+		hivepress.getComponent('password').each(function () {
+			var field = $(this),
+				label = field.prev('label'),
+				button = field.next('a');
+
+			if (button.length) {
+				if (!field.val()) {
+					button.hide();
+				}
+
+				field.on('input', function () {
+					if (field.val()) {
+						button.show();
+					} else {
+						button.hide();
+					}
+				});
+
+				button.on('click', function () {
+					if (field.attr('type') === 'password') {
+						field.attr('type', 'text');
+					} else {
+						field.attr('type', 'password');
+					}
+				});
+			}
+
+			if (label.length && field.attr('autocomplete') === 'new-password') {
+				var status = $('<small />').appendTo(label);
+
+				field.on('input', function () {
+					var text = pwsL10n.short,
+						color = '#ff3860';
+
+					switch (wp.passwordStrength.meter(field.val(), [])) {
+						case 2:
+							text = pwsL10n.bad;
+
+							break;
+
+						case 3:
+							text = pwsL10n.good;
+							color = '#ff8a00';
+
+							break;
+
+						case 4:
+							text = pwsL10n.strong;
+							color = '#15cd72';
+
+							break;
+
+						case 5:
+							text = pwsL10n.mismatch;
+
+							break;
+					}
+
+					if (field.val()) {
+						status.text(' (' + text.toLowerCase() + ')').css('color', color);
+
+						status.show();
+					} else {
+						status.hide();
+					}
+				});
+			}
 		});
 
 		// Buttons

@@ -69,6 +69,9 @@ final class Router extends Component {
 
 			// Disable page redirect.
 			add_filter( 'redirect_canonical', [ $this, 'disable_page_redirect' ] );
+
+			// Disable page query.
+			add_action( 'pre_get_posts', [ $this, 'disable_page_query' ] );
 		}
 
 		parent::__construct( $args );
@@ -290,7 +293,7 @@ final class Router extends Component {
 	 * @return string
 	 */
 	public function get_referer_url() {
-		return wp_validate_redirect( hp\get_array_value( $_SERVER, 'HTTP_REFERER' ) );
+		return wp_validate_redirect( (string) hp\get_array_value( $_SERVER, 'HTTP_REFERER' ) );
 	}
 
 	/**
@@ -693,5 +696,16 @@ final class Router extends Component {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Disables page query.
+	 *
+	 * @param WP_Query $query Query object.
+	 */
+	public function disable_page_query( $query ) {
+		if ( $query->is_main_query() && ! $query->get( 'post_type' ) && $query->get( 'hp_route' ) ) {
+			$query->set( 'post__in', [ 0 ] );
+		}
 	}
 }

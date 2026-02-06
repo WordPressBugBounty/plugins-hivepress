@@ -133,48 +133,55 @@ final class Attribute extends Component {
 	 *
 	 * @param string $model Model name.
 	 * @param array  $values Attribute values.
+	 * @param string $context Field context.
 	 * @return array
 	 */
-	protected function get_attribute_fields( $model, $values ) {
+	protected function get_attribute_fields( $model, $values, $context = 'search' ) {
 		$attribute_fields = [];
 
-		// Get category ID.
-		$category_id = isset( $values['_category'] ) ? absint( $values['_category'] ) : null;
+		// Get category IDs.
+		if ( 'search' === $context ) {
+			$category_ids = isset( $values['_category'] ) ? [ absint( $values['_category'] ) ] : [];
+		} else {
+			$category_ids = array_map( 'absint', (array) hp\get_array_value( $values, 'categories' ) );
+		}
 
 		// Get attributes.
-		$attributes = $this->get_attributes( $model, (array) $category_id );
+		$attributes = $this->get_attributes( $model, $category_ids );
 
-		// Get fields.
 		foreach ( $attributes as $attribute_name => $attribute ) {
-			if ( $attribute['searchable'] || $attribute['filterable'] ) {
 
-				// Get field arguments.
-				$field_args = $attribute['search_field'];
+			// Check attribute.
+			if ( ( 'search' === $context && ! $attribute['searchable'] && ! $attribute['filterable'] ) || ( 'edit' === $context && ! $attribute['related'] ) ) {
+				continue;
+			}
 
-				if ( isset( $field_args['options'] ) && ! isset( $field_args['_external'] ) ) {
-					$field_args['name'] = hp\prefix( $model . '_' . $attribute_name );
-				} else {
-					$field_args['name'] = hp\prefix( $attribute_name );
-				}
+			// Get field arguments.
+			$field_args = $attribute[ $context . '_field' ];
 
-				// Create field.
-				$field = hp\create_class_instance( '\HivePress\Fields\\' . $field_args['type'], [ $field_args ] );
+			if ( isset( $field_args['options'] ) && ! isset( $field_args['_external'] ) ) {
+				$field_args['name'] = hp\prefix( $model . '_' . $attribute_name );
+			} else {
+				$field_args['name'] = hp\prefix( $attribute_name );
+			}
 
-				if ( $field && $field::get_meta( 'filterable' ) ) {
+			// Create field.
+			$field = hp\create_class_instance( '\HivePress\Fields\\' . $field_args['type'], [ $field_args ] );
 
-					// Set field value.
-					$field->set_value( hp\get_array_value( $values, $attribute_name ) );
+			if ( $field && $field::get_meta( 'filterable' ) ) {
 
-					if ( $field->validate() ) {
+				// Set field value.
+				$field->set_value( hp\get_array_value( $values, $attribute_name ) );
 
-						// Check range values.
-						if ( 'number_range' === $field::get_meta( 'name' ) && ! array_diff( (array) $field->get_value(), $this->get_range_values( $model, $attribute_name ) ) ) {
-							continue;
-						}
+				if ( $field->validate() ) {
 
-						// Add field.
-						$attribute_fields[ $attribute_name ] = $field;
+					// Check range values.
+					if ( 'number_range' === $field::get_meta( 'name' ) && ! array_diff( (array) $field->get_value(), $this->get_range_values( $model, $attribute_name ) ) ) {
+						continue;
 					}
+
+					// Add field.
+					$attribute_fields[ $attribute_name ] = $field;
 				}
 			}
 		}
@@ -220,16 +227,35 @@ final class Attribute extends Component {
 	 * @return bool
 	 */
 	protected function requires_category_model( $model ) {
-		$taxonomy = hp\prefix( $this->get_category_model( $model ) );
 
-		return taxonomy_exists( $taxonomy ) && get_terms(
-			[
-				'taxonomy'   => $taxonomy,
-				'number'     => 1,
-				'fields'     => 'ids',
-				'hide_empty' => false,
-			]
-		);
+		// Get category model.
+		$category_model = $this->get_category_model( $model );
+
+		// Set query arguments.
+		$args = [
+			'taxonomy'   => hp\prefix( $category_model ),
+			'number'     => 1,
+			'fields'     => 'ids',
+			'hide_empty' => false,
+		];
+
+		// Check taxonomy.
+		if ( ! taxonomy_exists( $args['taxonomy'] ) ) {
+			return false;
+		}
+
+		// Get category IDs.
+		$category_ids = hivepress()->cache->get_cache( $args, 'models/' . $category_model );
+
+		if ( is_null( $category_ids ) ) {
+			$category_ids = get_terms( $args );
+
+			if ( is_array( $category_ids ) ) {
+				hivepress()->cache->set_cache( $args, 'models/' . $category_model, $category_ids );
+			}
+		}
+
+		return (bool) $category_ids;
 	}
 
 	/**
@@ -303,8 +329,12 @@ final class Attribute extends Component {
 	protected function get_term_id( $model ) {
 		$term_id = null;
 
-		if ( is_tax() && strpos( get_queried_object()->taxonomy, hp\prefix( $model . '_' ) ) === 0 ) {
-			$term_id = get_queried_object_id();
+		if ( is_tax() ) {
+			$term = get_queried_object();
+
+			if ( $term && strpos( $term->taxonomy, hp\prefix( $model . '_' ) ) === 0 ) {
+				$term_id = get_queried_object_id();
+			}
 		}
 
 		return $term_id;
@@ -492,6 +522,9 @@ final class Attribute extends Component {
 
 				// Set range values.
 				add_filter( 'hivepress/v1/forms/' . $model . '_filter', [ $this, 'set_range_values' ], 100, 2 );
+
+				// Set related query.
+				add_action( 'hivepress/v1/models/' . $model . '/relate', [ $this, 'set_related_query' ], 100, 2 );
 			}
 		}
 	}
@@ -556,7 +589,14 @@ final class Attribute extends Component {
 	 * Registers attributes.
 	 */
 	public function register_attributes() {
+
+		// Set field contexts.
+		$field_contexts = [ 'edit', 'search' ];
+
 		foreach ( $this->get_models() as $model ) {
+
+			// Get category model.
+			$category_model = $this->get_category_model( $model );
 
 			// Set query arguments.
 			$query_args = [
@@ -596,6 +636,7 @@ final class Attribute extends Component {
 						'searchable'     => (bool) $attribute_object->hp_searchable,
 						'filterable'     => (bool) $attribute_object->hp_filterable,
 						'sortable'       => (bool) $attribute_object->hp_sortable,
+						'related'        => (bool) $attribute_object->hp_related,
 						'categories'     => [],
 						'edit_field'     => [],
 						'search_field'   => [],
@@ -611,13 +652,11 @@ final class Attribute extends Component {
 					$attribute_args['display_format'] = str_replace( '%icon%', $icon, $attribute_args['display_format'] );
 
 					// Set categories.
-					if ( taxonomy_exists( hp\prefix( $this->get_category_model( $model ) ) ) ) {
-						$attribute_args['categories'] = wp_get_post_terms( $attribute_object->ID, hp\prefix( $this->get_category_model( $model ) ), [ 'fields' => 'ids' ] );
+					if ( taxonomy_exists( hp\prefix( $category_model ) ) ) {
+						$attribute_args['categories'] = wp_get_post_terms( $attribute_object->ID, hp\prefix( $category_model ), [ 'fields' => 'ids' ] );
 					}
 
 					// Get fields.
-					$field_contexts = [ 'edit', 'search' ];
-
 					foreach ( $field_contexts as $field_context ) {
 
 						// Set defaults.
@@ -699,6 +738,7 @@ final class Attribute extends Component {
 					$taxonomy_name = hp\prefix( $model . '_' . $attribute_name );
 					$taxonomy_type = hp\prefix( $model );
 
+					// Set taxonomy arguments.
 					$taxonomy_args = [
 						'hierarchical'       => true,
 						'public'             => false,
@@ -731,7 +771,36 @@ final class Attribute extends Component {
 					}
 
 					if ( ! taxonomy_exists( $taxonomy_name ) ) {
+
+						// Register taxonomy.
 						register_taxonomy( $taxonomy_name, $taxonomy_type, $taxonomy_args );
+
+						// Set term arguments.
+						$term_args = [
+							'taxonomy'   => $taxonomy_name,
+							'fields'     => 'count',
+							'hide_empty' => false,
+						];
+
+						// Get cache group.
+						$cache_group = hivepress()->model->get_cache_group( 'term', $taxonomy_name );
+
+						// Get term count.
+						$term_count = hivepress()->cache->get_cache( $term_args, $cache_group );
+
+						if ( is_null( $term_count ) ) {
+							$term_count = get_terms( $term_args );
+
+							hivepress()->cache->set_cache( $term_args, $cache_group, $term_count );
+						}
+
+						if ( $term_count > 100 ) {
+							foreach ( $field_contexts as $field_context ) {
+
+								// Set field source.
+								$attributes[ $attribute_name ][ $field_context . '_field' ]['source'] = hivepress()->router->get_url( 'attribute_options_resource', [ 'attribute_id' => $attribute_args['id'] ] );
+							}
+						}
 					}
 				}
 			}
@@ -747,7 +816,7 @@ final class Attribute extends Component {
 
 			// Set categories.
 			foreach ( $attributes as $attribute_name => $attribute_args ) {
-				$taxonomy_name = hp\prefix( $this->get_category_model( $model ) );
+				$taxonomy_name = hp\prefix( $category_model );
 
 				if ( ! taxonomy_exists( $taxonomy_name ) ) {
 					continue;
@@ -789,6 +858,7 @@ final class Attribute extends Component {
 							'searchable'     => false,
 							'filterable'     => false,
 							'sortable'       => false,
+							'related'        => false,
 							'categories'     => [],
 							'edit_field'     => [],
 							'search_field'   => [],
@@ -883,8 +953,11 @@ final class Attribute extends Component {
 		// Get field context.
 		$field_context = hp\get_last_array_value( explode( '_', $meta_box['name'] ) );
 
+		// Get field prefix.
+		$field_prefix = 'display' === $field_context ? 'edit' : $field_context;
+
 		// Get field type.
-		$field_type = sanitize_key( get_post_meta( get_the_ID(), hp\prefix( ( 'display' === $field_context ? 'edit' : $field_context ) . '_field_type' ), true ) );
+		$field_type = sanitize_key( get_post_meta( get_the_ID(), hp\prefix( $field_prefix . '_field_type' ), true ) );
 
 		if ( $field_type ) {
 
@@ -894,7 +967,7 @@ final class Attribute extends Component {
 			// Add field settings.
 			if ( $field_settings ) {
 				foreach ( $field_settings as $field_name => $field ) {
-					if ( ( 'edit' === $field_context && 'search' !== $field->get_arg( '_context' ) ) || ( 'search' === $field_context && 'edit' !== $field->get_arg( '_context' ) ) ) {
+					if ( ( ! $field->get_arg( '_context' ) && 'display' !== $field_context ) || $field->get_arg( '_context' ) === $field_context ) {
 
 						// Get field arguments.
 						$field_args = $field->get_args();
@@ -940,13 +1013,14 @@ final class Attribute extends Component {
 						}
 
 						// Add field.
-						$meta_box['fields'][ $field_context . '_field_' . $field_name ] = $field_args;
+						$meta_box['fields'][ $field_prefix . '_field_' . $field_name ] = $field_args;
 					}
 				}
 
-				// @todo replace temporary fix.
 				if ( 'edit' === $field_context ) {
-					$meta_box['fields'][ $field_context . '_field_description' ] = [
+
+					// @todo replace temporary fix.
+					$meta_box['fields'][ $field_prefix . '_field_description' ] = [
 						'label'      => hivepress()->translator->get_string( 'description' ),
 						'type'       => 'textarea',
 						'max_length' => 2048,
@@ -962,10 +1036,11 @@ final class Attribute extends Component {
 					];
 				} elseif ( 'display' === $field_context && isset( $field_settings['options'] ) && 'user' !== $model ) {
 					$meta_box['fields']['public'] = [
-						'label'   => esc_html__( 'Pages', 'hivepress' ),
-						'caption' => esc_html__( 'Create a page for each attribute option', 'hivepress' ),
-						'type'    => 'checkbox',
-						'_order'  => 5,
+						'label'       => esc_html__( 'Pages', 'hivepress' ),
+						'caption'     => esc_html__( 'Create a page for each option', 'hivepress' ),
+						'description' => esc_html__( 'Check this option to enable a category-like page for each attribute option.', 'hivepress' ),
+						'type'        => 'checkbox',
+						'_order'      => 1,
 					];
 				}
 			}
@@ -995,7 +1070,7 @@ final class Attribute extends Component {
 				}
 
 				// Add field.
-				$meta_box['fields']['edit_field_name'] = $field_args;
+				$meta_box['fields'][ $field_prefix . '_field_name' ] = $field_args;
 			}
 
 			// @todo replace temporary fix.
@@ -1043,6 +1118,9 @@ final class Attribute extends Component {
 		// Get model.
 		$model = $object::_get_meta( 'name' );
 
+		// Get category model.
+		$category_model = $this->get_category_model( $model );
+
 		// Get category IDs.
 		$category_ids = null;
 
@@ -1050,15 +1128,20 @@ final class Attribute extends Component {
 			$category_ids = null;
 
 			if ( $object->get_id() ) {
-				$category_ids = hivepress()->cache->get_post_cache( $object->get_id(), [ 'fields' => 'ids' ], 'models/' . $this->get_category_model( $model ) );
+				$category_ids = hivepress()->cache->get_post_cache( $object->get_id(), [ 'fields' => 'ids' ], 'models/' . $category_model );
 			}
 
 			if ( is_null( $category_ids ) ) {
 				$category_ids = $this->get_category_ids( $model, $object );
 
 				if ( $object->get_id() && is_array( $category_ids ) && count( $category_ids ) <= 100 ) {
-					hivepress()->cache->set_post_cache( $object->get_id(), [ 'fields' => 'ids' ], 'models/' . $this->get_category_model( $model ), $category_ids );
+					hivepress()->cache->set_post_cache( $object->get_id(), [ 'fields' => 'ids' ], 'models/' . $category_model, $category_ids );
 				}
+			}
+
+			// Make category required.
+			if ( isset( $fields['categories'] ) && $this->requires_category_model( $model ) ) {
+				$fields['categories']['required'] = true;
 			}
 		}
 
@@ -1099,7 +1182,7 @@ final class Attribute extends Component {
 					$field_args = array_merge(
 						$field_args,
 						[
-							'_model'    => $this->get_category_model( $model ),
+							'_model'    => $category_model,
 							'_alias'    => hp\prefix( $model . '_' . $attribute_name ),
 							'_relation' => 'many_to_many',
 						]
@@ -1380,8 +1463,11 @@ final class Attribute extends Component {
 		// Get model.
 		$model = $form::get_meta( 'model' );
 
+		// Get category model.
+		$category_model = $this->get_category_model( $model );
+
 		// Check category option.
-		if ( ! taxonomy_exists( hp\prefix( $this->get_category_model( $model ) ) ) || in_array( 'category', (array) get_option( hp\prefix( $model . '_search_fields' ) ), true ) ) {
+		if ( ! taxonomy_exists( hp\prefix( $category_model ) ) || in_array( 'category', (array) get_option( hp\prefix( $model . '_search_fields' ) ), true ) ) {
 			return $form_args;
 		}
 
@@ -1390,7 +1476,7 @@ final class Attribute extends Component {
 
 		// Set query arguments.
 		$query_args = [
-			'taxonomy'   => hp\prefix( $this->get_category_model( $model ) ),
+			'taxonomy'   => hp\prefix( $category_model ),
 			'parent'     => $category_id,
 			'fields'     => 'ids',
 			'hide_empty' => false,
@@ -1405,7 +1491,7 @@ final class Attribute extends Component {
 					'format' => 'tree',
 				]
 			),
-			'models/' . $this->get_category_model( $model )
+			'models/' . $category_model
 		);
 
 		if ( is_null( $options ) ) {
@@ -1415,7 +1501,7 @@ final class Attribute extends Component {
 			$category_ids = get_terms( $query_args );
 
 			if ( $category_id ) {
-				$category_ids = array_merge( $category_ids, [ $category_id ], get_ancestors( $category_id, hp\prefix( $this->get_category_model( $model ) ), 'taxonomy' ) );
+				$category_ids = array_merge( $category_ids, [ $category_id ], get_ancestors( $category_id, hp\prefix( $category_model ), 'taxonomy' ) );
 			}
 
 			if ( $category_ids ) {
@@ -1491,7 +1577,7 @@ final class Attribute extends Component {
 							'format' => 'tree',
 						]
 					),
-					'models/' . $this->get_category_model( $model ),
+					'models/' . $category_model,
 					$options
 				);
 			}
@@ -1689,7 +1775,7 @@ final class Attribute extends Component {
 			// Add field.
 			if ( isset( $settings[ $model_name . 's' ]['sections']['search'] ) ) {
 				$settings[ $model_name . 's' ]['sections']['search']['fields'][ $model_name . '_default_order' ] = [
-					'label'   => esc_html__( 'Default Sorting', 'hivepress' ),
+					'label'   => hivepress()->translator->get_string( 'default_sorting' ),
 					'type'    => 'select',
 					'options' => $sort_options,
 					'_order'  => 20,
@@ -1794,11 +1880,12 @@ final class Attribute extends Component {
 					],
 
 					'icon'           => [
-						'label'   => esc_html__( 'Icon', 'hivepress' ),
-						'type'    => 'select',
-						'options' => 'icons',
-						'_parent' => 'display_areas[]',
-						'_order'  => 20,
+						'label'       => esc_html__( 'Icon', 'hivepress' ),
+						'description' => esc_html__( 'Choose an icon for this attribute to include in the display format with the %icon% token.', 'hivepress' ),
+						'type'        => 'select',
+						'options'     => 'icons',
+						'_parent'     => 'display_areas[]',
+						'_order'      => 20,
 					],
 
 					'display_format' => [
@@ -1809,7 +1896,7 @@ final class Attribute extends Component {
 						'default'     => '%value%',
 						'html'        => true,
 						'_parent'     => 'display_areas[]',
-						'_order'      => 30,
+						'_order'      => 100,
 					],
 				],
 			],
@@ -1818,13 +1905,21 @@ final class Attribute extends Component {
 				'screen' => [],
 
 				'fields' => [
+					'icon'       => [
+						'label'       => esc_html__( 'Icon', 'hivepress' ),
+						'description' => esc_html__( 'Choose an icon to include in the display format with the %icon% token.', 'hivepress' ),
+						'type'        => 'select',
+						'options'     => 'icons',
+						'_order'      => 10,
+					],
+
 					'sort_order' => [
 						'label'     => esc_html_x( 'Order', 'sort priority', 'hivepress' ),
 						'type'      => 'number',
 						'min_value' => 0,
 						'default'   => 0,
 						'required'  => true,
-						'_order'    => 10,
+						'_order'    => 20,
 					],
 				],
 			],
@@ -1874,22 +1969,32 @@ final class Attribute extends Component {
 					}
 
 					// @todo replace temporary fix.
-					if ( 'listing' === $model && 'attribute_edit' === $meta_box_name ) {
-						$meta_box['fields']['synced'] = [
-							'label'       => esc_html_x( 'Synced', 'attribute', 'hivepress' ),
-							'caption'     => esc_html__( 'Sync with the vendor field', 'hivepress' ),
-							'description' => esc_html__( 'Check this option to sync the value with the vendor field of the same name.', 'hivepress' ),
-							'type'        => 'checkbox',
-							'_order'      => 20,
-						];
+					if ( 'listing' === $model ) {
+						if ( 'attribute_edit' === $meta_box_name ) {
+							$meta_box['fields']['synced'] = [
+								'label'       => esc_html_x( 'Synced', 'attribute', 'hivepress' ),
+								'caption'     => esc_html__( 'Sync with the vendor field', 'hivepress' ),
+								'description' => esc_html__( 'Check this option to sync the value with the vendor field of the same name.', 'hivepress' ),
+								'type'        => 'checkbox',
+								'_order'      => 20,
+							];
 
-						$meta_box['fields']['moderated'] = [
-							'label'   => esc_html_x( 'Moderated', 'attribute', 'hivepress' ),
-							'caption' => esc_html__( 'Manually approve changes', 'hivepress' ),
-							'type'    => 'checkbox',
-							'_parent' => 'editable',
-							'_order'  => 30,
-						];
+							$meta_box['fields']['moderated'] = [
+								'label'   => esc_html_x( 'Moderated', 'attribute', 'hivepress' ),
+								'caption' => esc_html__( 'Manually approve changes', 'hivepress' ),
+								'type'    => 'checkbox',
+								'_parent' => 'editable',
+								'_order'  => 30,
+							];
+						} elseif ( 'attribute_display' === $meta_box_name ) {
+							$meta_box['fields']['related'] = [
+								'label'       => esc_html_x( 'Related', 'attribute', 'hivepress' ),
+								'caption'     => esc_html__( 'Include in related criteria', 'hivepress' ),
+								'description' => esc_html__( 'Check this option if you want this attribute to determine related listings.', 'hivepress' ),
+								'type'        => 'checkbox',
+								'_order'      => 5,
+							];
+						}
 					}
 				} elseif ( 'option_settings' === $meta_box_name ) {
 					foreach ( $this->attributes[ $model ] as $attribute_name => $attribute ) {
@@ -1937,11 +2042,12 @@ final class Attribute extends Component {
 				$attributes = $this->get_attributes( $model, $category_ids );
 
 				// Remove meta boxes.
-				remove_meta_box( hp\prefix( $model . '_categorydiv' ), hp\prefix( $model ), 'side' );
+				remove_meta_box( 'commentsdiv', $post_type, 'normal' );
+				remove_meta_box( hp\prefix( $model . '_categorydiv' ), $post_type, 'side' );
 
 				foreach ( $this->attributes[ $model ] as $attribute_name => $attribute ) {
 					if ( ! isset( $attributes[ $attribute_name ] ) && isset( $attribute['edit_field']['options'] ) && ! isset( $attribute['edit_field']['_external'] ) ) {
-						remove_meta_box( hp\prefix( $model . '_' . $attribute_name . 'div' ), hp\prefix( $model ), 'side' );
+						remove_meta_box( hp\prefix( $model . '_' . $attribute_name . 'div' ), $post_type, 'side' );
 					}
 				}
 			}
@@ -1982,7 +2088,33 @@ final class Attribute extends Component {
 	}
 
 	/**
-	 * Sets WP search query.
+	 * Sets related query.
+	 *
+	 * @param object $query Query object.
+	 * @param object $model Model object.
+	 */
+	public function set_related_query( $query, $model ) {
+
+		// Exclude ID.
+		$query->filter( [ 'id__not_in' => [ $model->get_id() ] ] );
+
+		// Set categories.
+		if ( $model->get_categories__id() && in_array( 'category', (array) get_option( 'hp_' . $model::_get_meta( 'name' ) . '_related_criteria', [ 'category' ] ) ) ) {
+			$query->filter( [ 'categories__in' => $model->get_categories__id() ] );
+		}
+
+		// Get attribute fields.
+		$fields = $this->get_attribute_fields( $model::_get_meta( 'name' ), $model->serialize(), 'edit' );
+
+		if ( $fields ) {
+
+			// Set query arguments.
+			$query->set_args( $this->get_query_args( $fields ) );
+		}
+	}
+
+	/**
+	 * Sets search query.
 	 *
 	 * @param WP_Query $query Search query.
 	 */
@@ -2153,13 +2285,21 @@ final class Attribute extends Component {
 		$query->set( 'meta_query', $meta_query );
 		$query->set( 'tax_query', $tax_query );
 
+		/**
+		 * Fires when models are being queried (e.g. on the archive, category, or search pages). The dynamic part of the hook refers to the model name (e.g. `listing`, `vendor`).
+		 *
+		 * @hook hivepress/v1/models/{model_name}/query
+		 * @param {WP_Query} $query Query object.
+		 */
+		do_action( 'hivepress/v1/models/' . $model . '/query', $query );
+
 		if ( $query->is_search() ) {
 
 			/**
 			 * Fires when models are being searched. The dynamic part of the hook refers to the model name (e.g. `listing`, `vendor`).
 			 *
 			 * @hook hivepress/v1/models/{model_name}/search
-			 * @param {WP_Query} $query Search query.
+			 * @param {WP_Query} $query Query object.
 			 * @param {array} $fields Search fields.
 			 */
 			do_action( 'hivepress/v1/models/' . $model . '/search', $query, $attribute_fields );

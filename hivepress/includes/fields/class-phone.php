@@ -105,9 +105,6 @@ class Phone extends Text {
 			$attributes['data-country'] = $this->country;
 		}
 
-		// Set utils URL.
-		$attributes['data-utils'] = hivepress()->get_url() . '/node_modules/intl-tel-input/build/js/utils.js';
-
 		// Set component.
 		$attributes['data-component'] = 'phone';
 
@@ -117,11 +114,44 @@ class Phone extends Text {
 	}
 
 	/**
+	 * Sets field display template.
+	 *
+	 * @param string $display_template Display template.
+	 */
+	protected function set_display_template( $display_template ) {
+		if ( ! hp\has_shortcode( $display_template ) ) {
+			if ( strpos( $display_template, '<a ' ) === false ) {
+				$display_template = str_replace( '%value%', '<span data-component="phone">%value%</span>', $display_template );
+			} else {
+				$display_template = str_replace( '<a ', '<a data-component="phone" ', $display_template );
+			}
+		}
+
+		$this->display_template = $display_template;
+	}
+
+	/**
+	 * Sets field countries.
+	 *
+	 * @param array $countries Country codes.
+	 */
+	protected function set_countries( $countries ) {
+		if ( $countries ) {
+
+			// Set display template.
+			$this->display_template = str_replace( 'data-component', 'data-countries="' . hp\esc_json( wp_json_encode( $countries ) ) . '" data-component', $this->display_template );
+		}
+
+		$this->countries = $countries;
+	}
+
+	/**
 	 * Sanitizes field value.
 	 */
 	protected function sanitize() {
 		parent::sanitize();
 
-		$this->value = preg_replace( '/[\-\s]+/', '', $this->value );
+		$this->value = preg_replace( '/[^\d+]/', '', $this->value );
+		$this->value = preg_replace( '/(?!^)\+/', '', $this->value );
 	}
 }
