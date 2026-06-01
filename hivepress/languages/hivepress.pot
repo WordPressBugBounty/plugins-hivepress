@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the HivePress plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: HivePress 1.7.23\n"
+"Project-Id-Version: HivePress 1.7.24\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-03-31T19:47:54+00:00\n"
+"POT-Creation-Date: 2026-06-01T21:09:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: hivepress\n"
@@ -64,71 +64,71 @@ msgstr ""
 msgid "Extensions"
 msgstr ""
 
-#: includes/components/class-admin.php:970
+#: includes/components/class-admin.php:973
 msgctxt "plural"
 msgid "All"
 msgstr ""
 
-#: includes/components/class-admin.php:975
+#: includes/components/class-admin.php:978
 msgctxt "plural"
 msgid "Installed"
 msgstr ""
 
-#: includes/components/class-admin.php:1725
+#: includes/components/class-admin.php:1728
 #: includes/configs/strings.php:16
 #: templates/admin/settings.php:6
 msgid "Settings"
 msgstr ""
 
 #. translators: 1: settings URL, 2: unlicensed products.
-#: includes/components/class-admin.php:1801
+#: includes/components/class-admin.php:1805
 #, php-format
 msgid "Please <a href=\"%1$s\">add the license keys</a> for the installed premium HivePress themes and extensions. The following products without valid licenses are going to be disabled automatically: %2$s."
 msgstr ""
 
 #. translators: %s: themes URL.
-#: includes/components/class-admin.php:1815
+#: includes/components/class-admin.php:1820
 #, php-format
 msgid "The current theme doesn't declare HivePress support, if you notice any styling issues please consider using one of the <a href=\"%s\">official themes</a> instead."
 msgstr ""
 
 #. translators: %s: link URL.
-#: includes/components/class-admin.php:1828
+#: includes/components/class-admin.php:1833
 #, php-format
 msgid "It's been more than 2 weeks since you installed HivePress, that's awesome! If you find it useful, please leave a review on <a href=\"%s\" target=\"_blank\">WordPress.org</a> to help us spread the word."
 msgstr ""
 
 #. translators: %s: link URL.
-#: includes/components/class-admin.php:1843
+#: includes/components/class-admin.php:1848
 #, php-format
 msgid "Great start with HivePress! Check out our <a href=\"%1$s\">premium themes</a> and <a href=\"%2$s\">extensions</a> for more tailored design and functionality."
 msgstr ""
 
 #. translators: %s: terms URL.
-#: includes/components/class-admin.php:1857
+#: includes/components/class-admin.php:1862
 #, php-format
 msgid "Help us make HivePress better by sharing <a href=\"%s\" target=\"_blank\">non-sensitive usage data</a> or dismiss this notice to opt out."
 msgstr ""
 
 #. translators: %s: terms URL.
-#: includes/components/class-admin.php:1857
+#: includes/components/class-admin.php:1862
 msgid "Share Usage Data"
 msgstr ""
 
 #. translators: %s: link URL.
-#: includes/components/class-admin.php:1869
+#: includes/components/class-admin.php:1874
 #, php-format
 msgid "Have you already launched this website? Please submit it to the <a href=\"%s\" target=\"_blank\">HivePress Showcase</a> to inspire others."
 msgstr ""
 
 #. translators: %s: link URL.
-#: includes/components/class-admin.php:1882
+#: includes/components/class-admin.php:1887
 #, php-format
 msgid "Are you a developer familiar with HivePress? Join the <a href=\"%s\" target=\"_blank\">HivePress Experts</a> program to regularly get new clients."
 msgstr ""
 
 #. translators: %s: plugin name.
-#: includes/components/class-admin.php:2014
+#: includes/components/class-admin.php:2019
 #, php-format
 msgid "Deactivate %s"
 msgstr ""
@@ -157,191 +157,199 @@ msgstr ""
 msgid "No options found."
 msgstr ""
 
-#: includes/components/class-attribute.php:991
+#: includes/components/class-attribute.php:978
 msgid "Edit Options"
 msgstr ""
 
-#: includes/components/class-attribute.php:1042
+#: includes/components/class-attribute.php:1011
+msgid "Load options dynamically"
+msgstr ""
+
+#: includes/components/class-attribute.php:1012
+msgid "Check this option to load dropdown choices while typing instead of all at once."
+msgstr ""
+
+#: includes/components/class-attribute.php:1039
 msgctxt "attribute"
 msgid "Searchable"
 msgstr ""
 
-#: includes/components/class-attribute.php:1043
+#: includes/components/class-attribute.php:1040
 msgid "Display in the search form"
 msgstr ""
 
-#: includes/components/class-attribute.php:1049
+#: includes/components/class-attribute.php:1046
 msgid "Pages"
 msgstr ""
 
-#: includes/components/class-attribute.php:1050
+#: includes/components/class-attribute.php:1047
 msgid "Create a page for each option"
 msgstr ""
 
-#: includes/components/class-attribute.php:1051
+#: includes/components/class-attribute.php:1048
 msgid "Check this option to enable a category-like page for each attribute option."
 msgstr ""
 
-#: includes/components/class-attribute.php:1068
+#: includes/components/class-attribute.php:1065
 msgid "Field Name"
 msgstr ""
 
-#: includes/components/class-attribute.php:1069
+#: includes/components/class-attribute.php:1066
 msgid "Set the field name used for storing the attribute values."
 msgstr ""
 
-#: includes/components/class-attribute.php:1069
+#: includes/components/class-attribute.php:1066
 msgid "Use lowercase letters, numbers, and underscores only."
 msgstr ""
 
-#: includes/components/class-attribute.php:1306
+#: includes/components/class-attribute.php:1303
 msgctxt "field"
 msgid "requires review"
 msgstr ""
 
-#: includes/components/class-attribute.php:1810
+#: includes/components/class-attribute.php:1807
 #: includes/configs/strings.php:206
 msgid "Attributes"
 msgstr ""
 
-#: includes/components/class-attribute.php:1819
+#: includes/components/class-attribute.php:1816
 msgctxt "attribute"
 msgid "Editable"
 msgstr ""
 
-#: includes/components/class-attribute.php:1820
+#: includes/components/class-attribute.php:1817
 msgid "Allow front-end editing"
 msgstr ""
 
-#: includes/components/class-attribute.php:1826
-#: includes/components/class-attribute.php:1862
+#: includes/components/class-attribute.php:1823
+#: includes/components/class-attribute.php:1859
 msgid "Field Type"
 msgstr ""
 
-#: includes/components/class-attribute.php:1841
+#: includes/components/class-attribute.php:1838
 msgctxt "attribute"
 msgid "Filterable"
 msgstr ""
 
-#: includes/components/class-attribute.php:1842
+#: includes/components/class-attribute.php:1839
 msgid "Display in the filter form"
 msgstr ""
 
-#: includes/components/class-attribute.php:1848
+#: includes/components/class-attribute.php:1845
 msgctxt "attribute"
 msgid "Indexable"
 msgstr ""
 
-#: includes/components/class-attribute.php:1849
+#: includes/components/class-attribute.php:1846
 msgid "Include in keyword search"
 msgstr ""
 
-#: includes/components/class-attribute.php:1855
+#: includes/components/class-attribute.php:1852
 msgctxt "attribute"
 msgid "Sortable"
 msgstr ""
 
-#: includes/components/class-attribute.php:1856
+#: includes/components/class-attribute.php:1853
 msgid "Display as a sorting option"
 msgstr ""
 
-#: includes/components/class-attribute.php:1876
+#: includes/components/class-attribute.php:1873
 msgid "Areas"
 msgstr ""
 
-#: includes/components/class-attribute.php:1877
+#: includes/components/class-attribute.php:1874
 msgid "Choose the template areas where you want to display this attribute."
 msgstr ""
 
-#: includes/components/class-attribute.php:1883
-#: includes/components/class-attribute.php:1884
-#: includes/components/class-attribute.php:1885
+#: includes/components/class-attribute.php:1880
+#: includes/components/class-attribute.php:1881
+#: includes/components/class-attribute.php:1882
 msgid "Block"
 msgstr ""
 
+#: includes/components/class-attribute.php:1880
 #: includes/components/class-attribute.php:1883
-#: includes/components/class-attribute.php:1886
 msgctxt "area"
 msgid "primary"
 msgstr ""
 
+#: includes/components/class-attribute.php:1881
 #: includes/components/class-attribute.php:1884
-#: includes/components/class-attribute.php:1887
 msgctxt "area"
 msgid "secondary"
 msgstr ""
 
+#: includes/components/class-attribute.php:1882
 #: includes/components/class-attribute.php:1885
-#: includes/components/class-attribute.php:1888
 msgctxt "area"
 msgid "ternary"
 msgstr ""
 
-#: includes/components/class-attribute.php:1886
-#: includes/components/class-attribute.php:1887
-#: includes/components/class-attribute.php:1888
+#: includes/components/class-attribute.php:1883
+#: includes/components/class-attribute.php:1884
+#: includes/components/class-attribute.php:1885
 msgid "Page"
 msgstr ""
 
-#: includes/components/class-attribute.php:1893
-#: includes/components/class-attribute.php:1919
+#: includes/components/class-attribute.php:1890
+#: includes/components/class-attribute.php:1916
 msgid "Icon"
 msgstr ""
 
-#: includes/components/class-attribute.php:1894
+#: includes/components/class-attribute.php:1891
 msgid "Choose an icon for this attribute to include in the display format with the %icon% token."
 msgstr ""
 
-#: includes/components/class-attribute.php:1902
+#: includes/components/class-attribute.php:1899
 msgid "Format"
 msgstr ""
 
-#: includes/components/class-attribute.php:1903
+#: includes/components/class-attribute.php:1900
 msgid "Set the attribute display format."
 msgstr ""
 
-#: includes/components/class-attribute.php:1920
+#: includes/components/class-attribute.php:1917
 msgid "Choose an icon to include in the display format with the %icon% token."
 msgstr ""
 
-#: includes/components/class-attribute.php:1927
+#: includes/components/class-attribute.php:1924
 #: includes/configs/meta-boxes.php:132
 msgctxt "sort priority"
 msgid "Order"
 msgstr ""
 
-#: includes/components/class-attribute.php:1985
+#: includes/components/class-attribute.php:1982
 msgctxt "attribute"
 msgid "Synced"
 msgstr ""
 
-#: includes/components/class-attribute.php:1986
+#: includes/components/class-attribute.php:1983
 msgid "Sync with the vendor field"
 msgstr ""
 
-#: includes/components/class-attribute.php:1987
+#: includes/components/class-attribute.php:1984
 msgid "Check this option to sync the value with the vendor field of the same name."
 msgstr ""
 
-#: includes/components/class-attribute.php:1993
+#: includes/components/class-attribute.php:1990
 msgctxt "attribute"
 msgid "Moderated"
 msgstr ""
 
-#: includes/components/class-attribute.php:1994
+#: includes/components/class-attribute.php:1991
 msgid "Manually approve changes"
 msgstr ""
 
-#: includes/components/class-attribute.php:2001
+#: includes/components/class-attribute.php:1998
 msgctxt "attribute"
 msgid "Related"
 msgstr ""
 
-#: includes/components/class-attribute.php:2002
+#: includes/components/class-attribute.php:1999
 msgid "Include in related criteria"
 msgstr ""
 
-#: includes/components/class-attribute.php:2003
+#: includes/components/class-attribute.php:2000
 msgid "Check this option if you want this attribute to determine related listings."
 msgstr ""
 
@@ -366,7 +374,7 @@ msgid "Recipient"
 msgstr ""
 
 #: includes/components/class-email.php:231
-#: includes/fields/class-text.php:139
+#: includes/fields/class-text.php:140
 msgid "Click to copy"
 msgstr ""
 
@@ -1712,6 +1720,10 @@ msgstr ""
 msgid "Checkboxes"
 msgstr ""
 
+#: includes/fields/class-color.php:28
+msgid "Color"
+msgstr ""
+
 #: includes/fields/class-date-range.php:63
 msgid "Date Range"
 msgstr ""
@@ -1936,13 +1948,17 @@ msgstr ""
 msgid "Maximum Selection"
 msgstr ""
 
-#: includes/fields/class-select.php:127
-#: includes/fields/class-select.php:137
+#: includes/fields/class-select.php:133
+#: includes/fields/class-select.php:143
 msgid "Options"
 msgstr ""
 
-#: includes/fields/class-select.php:138
+#: includes/fields/class-select.php:144
 msgid "Search any of the selected options"
+msgstr ""
+
+#: includes/fields/class-select.php:145
+msgid "Check this option to match any selected choice rather than all choices at once."
 msgstr ""
 
 #: includes/fields/class-text.php:70
@@ -1959,6 +1975,10 @@ msgstr ""
 
 #: includes/fields/class-text.php:97
 msgid "Regex Pattern"
+msgstr ""
+
+#: includes/fields/class-text.php:98
+msgid "Set a regular expression pattern to validate the field value."
 msgstr ""
 
 #: includes/fields/class-textarea.php:35
