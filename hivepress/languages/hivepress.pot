@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the HivePress plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: HivePress 1.7.25\n"
+"Project-Id-Version: HivePress 1.7.26\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-24T21:05:43+00:00\n"
+"POT-Creation-Date: 2026-07-02T16:48:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: hivepress\n"
@@ -32,7 +32,7 @@ msgid "Multipurpose directory, listing & classifieds plugin."
 msgstr ""
 
 #: includes/blocks/class-listing-hide-toggle.php:31
-#: includes/fields/class-password.php:83
+#: includes/fields/class-password.php:94
 msgid "Hide"
 msgstr ""
 
@@ -1890,7 +1890,7 @@ msgstr ""
 msgid "\"%1$s\" can't be greater than %2$s."
 msgstr ""
 
-#: includes/fields/class-password.php:83
+#: includes/fields/class-password.php:94
 msgid "Show"
 msgstr ""
 
