@@ -74,9 +74,10 @@ class Text extends Field {
 	public static function init( $meta = [] ) {
 		$meta = hp\merge_arrays(
 			[
-				'label'      => esc_html__( 'Text', 'hivepress' ),
-				'filterable' => true,
-				'sortable'   => true,
+				'label'       => esc_html__( 'Text', 'hivepress' ),
+				'filterable'  => true,
+				'sortable'    => true,
+				'prefillable' => true,
 
 				'settings'   => [
 					'placeholder' => [
@@ -144,7 +145,7 @@ class Text extends Field {
 		// Set readonly flag.
 		if ( $this->readonly ) {
 			$attributes['readonly'] = true;
-			$attributes['title']    = esc_html__( 'Click to copy', 'hivepress' );
+			$attributes['title']    = hivepress()->translator->get_string( 'click_to_copy' );
 
 			$this->statuses['optional'] = null;
 		}
