@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the HivePress plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: HivePress 1.7.28\n"
+"Project-Id-Version: HivePress 1.7.29\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-19T19:10:28+00:00\n"
+"POT-Creation-Date: 2026-08-22T15:18:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: hivepress\n"
@@ -1609,12 +1609,12 @@ msgstr ""
 msgid "Password is incorrect."
 msgstr ""
 
-#: includes/controllers/class-user.php:1010
+#: includes/controllers/class-user.php:1022
 #, php-format
 msgid "Profile of %s"
 msgstr ""
 
-#: includes/controllers/class-user.php:1035
+#: includes/controllers/class-user.php:1047
 msgid "No users found."
 msgstr ""
 
@@ -1655,6 +1655,23 @@ msgstr ""
 
 #: includes/emails/class-listing-update.php:29
 msgid "Listing \"%listing_title%\" %listing_url% has been updated with the following details: %listing_attributes%."
+msgstr ""
+
+#: includes/emails/class-user-delete.php:28
+msgid "User Deleted"
+msgstr ""
+
+#: includes/emails/class-user-delete.php:29
+msgid "This email is sent to users after their account is deleted."
+msgstr ""
+
+#: includes/emails/class-user-delete.php:47
+msgid "Account Deleted"
+msgstr ""
+
+#: includes/emails/class-user-delete.php:48
+#, php-format
+msgid "Hi, %user_name%! Your account has been deleted, along with any associated content."
 msgstr ""
 
 #: includes/emails/class-user-email-verify.php:28
@@ -1735,7 +1752,7 @@ msgstr ""
 
 #: includes/fields/class-attachment-upload.php:356
 #: includes/fields/class-attachment-upload.php:358
-#: templates/admin/extensions.php:38
+#: templates/admin/extensions.php:39
 #: templates/admin/themes.php:25
 msgid "Download"
 msgstr ""
@@ -1793,18 +1810,18 @@ msgid "Allow setting time"
 msgstr ""
 
 #. translators: 1: field label, 2: date.
-#: includes/fields/class-date.php:336
+#: includes/fields/class-date.php:342
 #, php-format
 msgid "\"%1$s\" can't be earlier than %2$s."
 msgstr ""
 
 #. translators: 1: field label, 2: date.
-#: includes/fields/class-date.php:345
+#: includes/fields/class-date.php:351
 #, php-format
 msgid "\"%1$s\" can't be later than %2$s."
 msgstr ""
 
-#: includes/fields/class-date.php:391
+#: includes/fields/class-date.php:397
 #: includes/fields/class-time.php:124
 msgid "Clear"
 msgstr ""
@@ -2161,59 +2178,59 @@ msgstr ""
 msgid "Summary"
 msgstr ""
 
-#: templates/admin/extensions.php:40
+#: templates/admin/extensions.php:41
 #: templates/admin/themes.php:27
 msgid "Purchase"
 msgstr ""
 
-#: templates/admin/extensions.php:42
+#: templates/admin/extensions.php:43
 #: templates/admin/themes.php:29
 msgid "Install"
 msgstr ""
 
-#: templates/admin/extensions.php:47
+#: templates/admin/extensions.php:48
 msgid "Update"
 msgstr ""
 
-#: templates/admin/extensions.php:49
+#: templates/admin/extensions.php:50
 #: templates/admin/themes.php:34
 msgid "Activate"
 msgstr ""
 
-#: templates/admin/extensions.php:51
+#: templates/admin/extensions.php:52
 msgctxt "extension"
 msgid "Active"
 msgstr ""
 
 #. translators: %s: Discount percentage.
-#: templates/admin/extensions.php:63
+#: templates/admin/extensions.php:64
 #, php-format
 msgid "Save up to %s"
 msgstr ""
 
-#: templates/admin/extensions.php:67
+#: templates/admin/extensions.php:68
 msgid "Docs"
 msgstr ""
 
-#: templates/admin/extensions.php:69
+#: templates/admin/extensions.php:70
 msgctxt "noun"
 msgid "Support"
 msgstr ""
 
 #. translators: %s: extensions number.
-#: templates/admin/extensions.php:80
+#: templates/admin/extensions.php:81
 #, php-format
 msgid "%s Extensions"
 msgstr ""
 
 #. translators: %s: version number.
-#: templates/admin/extensions.php:84
+#: templates/admin/extensions.php:85
 #, php-format
 msgid "Version %s"
 msgstr ""
 
 #. translators: %s: annual price.
-#: templates/admin/extensions.php:98
+#: templates/admin/extensions.php:99
 #, php-format
 msgid "%s / year"
 msgstr ""
