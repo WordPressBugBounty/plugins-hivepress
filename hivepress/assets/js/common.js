@@ -93,6 +93,61 @@ var hivepress = {
 			});
 		});
 
+		// Storage
+		container.find('[data-restore]').each(function () {
+			var field = $(this),
+				inputs = field.is(':input[name!=""]') ? field : field.find(':input[name!=""]'),
+				name = 'hp_field_' + inputs.first().attr('name').replace('[]', ''),
+				stored = localStorage.getItem(name);
+
+			if (!stored) {
+				return;
+			}
+
+			try {
+				stored = JSON.parse(stored);
+
+				if (stored.expires > Date.now()) {
+					stored.value.forEach(function (value, index) {
+						inputs.eq(index).val(value);
+					});
+
+					setTimeout(function () {
+						inputs.trigger('change');
+					});
+
+					return;
+				}
+			} catch (error) { }
+
+			localStorage.removeItem(name);
+		});
+
+		container.find('[data-store]').each(function () {
+			var field = $(this),
+				inputs = field.is(':input[name!=""]') ? field : field.find(':input[name!=""]'),
+				name = 'hp_field_' + inputs.first().attr('name').replace('[]', '');
+
+			function storeValues() {
+				var values = inputs.map(function () {
+					return $(this).val();
+				}).get();
+
+				if (values.every(function (value) { return value === ''; })) {
+					localStorage.removeItem(name);
+				} else {
+					localStorage.setItem(name, JSON.stringify({
+						value: values,
+						expires: Date.now() + 24 * 60 * 60 * 1000,
+					}));
+				}
+			}
+
+			storeValues();
+
+			inputs.on('change', storeValues);
+		});
+
 		// Number
 		container.find(hivepress.getSelector('number')).each(function () {
 			var field = $(this),
@@ -200,7 +255,7 @@ var hivepress = {
 
 						if (state.element) {
 							level = parseInt($(state.element).data('level'));
-							template = $('<div />').css('padding-left', 20 * level + 'px').text(template);
+							template = $('<div />').css('padding-inline-start', 20 * level + 'px').text(template);
 						}
 
 						return template;
@@ -321,7 +376,7 @@ var hivepress = {
 					if (currentOptions.length > 1) {
 						currentOptions[0] = $.extend({}, currentOptions[0], {
 							id: currentOptions[0].parent,
-							text: '← ' + currentOptions[0].text,
+							text: ($('html').attr('dir') === 'rtl' ? '→ ' : '← ') + currentOptions[0].text,
 						});
 
 						field.html('').select2($.extend({}, settings, { data: currentOptions }));
@@ -350,7 +405,7 @@ var hivepress = {
 						} else {
 							currentOptions[0] = $.extend({}, currentOptions[0], {
 								id: currentOptions[0].parent,
-								text: '← ' + currentOptions[0].text,
+								text: ($('html').attr('dir') === 'rtl' ? '→ ' : '← ') + currentOptions[0].text,
 							});
 						}
 
@@ -962,6 +1017,14 @@ var hivepress = {
 				chart = new Chart(canvas, {
 					type: 'line',
 					options: {
+						plugins: {
+							legend: {
+								rtl: $('html').attr('dir') === 'rtl',
+							},
+							tooltip: {
+								rtl: $('html').attr('dir') === 'rtl',
+							},
+						},
 						scales: {
 							y: {
 								beginAtZero: true,
@@ -1327,6 +1390,12 @@ var hivepress = {
 
 		// Date picker
 		var language = hivepressCoreData.language;
+
+		if ($('html').attr('dir') === 'rtl') {
+			flatpickr.setDefaults({
+				position: 'auto right',
+			});
+		}
 
 		if (language === 'el') {
 			language = 'gr';

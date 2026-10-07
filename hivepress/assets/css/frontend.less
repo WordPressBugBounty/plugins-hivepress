@@ -222,6 +222,10 @@
 			}
 		}
 
+		input&&--password {
+			padding-right: 2.5rem;
+		}
+
 		&--date,
 		&--time {
 			display: flex;
@@ -356,6 +360,7 @@
 					font-size: 14px;
 					margin-left: 0.5rem;
 					opacity: 0.5;
+					transform: scaleX(1) /*rtl:scaleX(-1)*/;
 				}
 			}
 		}
@@ -561,6 +566,11 @@
 		&:not(:last-child) {
 			margin-bottom: 2rem;
 		}
+	}
+
+	.block-editor-block-list__block &-row {
+		margin-right: 0;
+		margin-left: 0;
 	}
 
 	/*--------------------------------------------------------------
@@ -836,6 +846,7 @@
 		&__title {
 			margin: 0;
 			word-wrap: break-word;
+			word-break: break-word;
 
 			a {
 				text-decoration: none;
@@ -882,6 +893,7 @@
 		&__attributes--secondary &__attribute,
 		&__attributes--ternary &__attribute {
 			word-wrap: break-word;
+			word-break: break-word;
 		}
 
 		&--view-block &__attributes--ternary &__attribute {
@@ -1048,6 +1060,7 @@
 		&__attributes--secondary &__attribute,
 		&__attributes--ternary &__attribute {
 			word-wrap: break-word;
+			word-break: break-word;
 		}
 
 		&--view-block &__attributes--ternary &__attribute,
