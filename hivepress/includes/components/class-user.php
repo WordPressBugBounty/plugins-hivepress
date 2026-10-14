@@ -131,11 +131,11 @@ final class User extends Component {
 		}
 
 		/**
-		 * Fires when a new user is verified.
+		 * Fires when a new user's email is verified via the verification link, social login or admin confirmation, or right after registration if email verification is disabled.
 		 *
 		 * @hook hivepress/v1/models/user/verify
 		 * @param {int} $user_id User ID.
-		 * @param {array} $values User values.
+		 * @param {array} $values User values (on registration only).
 		 */
 		do_action( 'hivepress/v1/models/user/verify', $user_id, $values );
 	}
@@ -262,7 +262,7 @@ final class User extends Component {
 			$form['fields']['_redirect'] = [
 				'type'         => 'url',
 				'display_type' => 'hidden',
-				'default'      => hp\get_array_value( $_GET, 'redirect' ),
+				'default'      => hp\get_array_value( $_GET, 'redirect' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only sets the default redirect URL of the rendered form, nothing is saved.
 				'_separate'    => true,
 			];
 		}
@@ -415,7 +415,7 @@ final class User extends Component {
 		}
 
 		// Get user ID.
-		$user_id = absint( hp\get_array_value( $_GET, 'user_id' ) );
+		$user_id = absint( hp\get_array_value( $_GET, 'user_id' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only checks which profile fields to display, nothing is saved.
 
 		if ( ! $user_id ) {
 			$user_id = get_current_user_id();
@@ -445,14 +445,14 @@ final class User extends Component {
 		}
 
 		// Delete verification key.
-		if ( hp\get_array_value( $_POST, 'hp_email_verified' ) && get_user_meta( $user_id, 'hp_email_verify_key', true ) ) {
+		if ( hp\get_array_value( $_POST, 'hp_email_verified' ) && get_user_meta( $user_id, 'hp_email_verify_key', true ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress in user-edit.php before saving the profile.
 			delete_user_meta( $user_id, 'hp_email_verified' );
 			delete_user_meta( $user_id, 'hp_email_verify_key' );
 
 			if ( ! get_user_meta( $user_id, 'hp_email_verify_address', true ) ) {
 
 				// Verify user.
-				do_action( 'hivepress/v1/models/user/verify', $user_id );
+				do_action( 'hivepress/v1/models/user/verify', $user_id, [] );
 			}
 		}
 	}

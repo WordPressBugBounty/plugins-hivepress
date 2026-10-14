@@ -137,9 +137,9 @@ final class Admin extends Component {
 	protected function is_admin_page() {
 		global $pagenow;
 
-		$page_name = (string) hp\get_array_value( $_GET, 'page' );
-		$post_type = 'post.php' === $pagenow ? get_post_type() : (string) hp\get_array_value( $_GET, 'post_type' );
-		$taxonomy  = (string) hp\get_array_value( $_GET, 'taxonomy' );
+		$page_name = (string) hp\get_array_value( $_GET, 'page' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only detects the current admin page, nothing is saved.
+		$post_type = 'post.php' === $pagenow ? get_post_type() : (string) hp\get_array_value( $_GET, 'post_type' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only detects the current admin page, nothing is saved.
+		$taxonomy  = (string) hp\get_array_value( $_GET, 'taxonomy' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only detects the current admin page, nothing is saved.
 
 		return ( 'admin.php' === $pagenow && strpos( $page_name, 'hp_' ) === 0 ) || ( in_array( $pagenow, [ 'edit.php', 'post.php', 'post-new.php' ] ) && strpos( $post_type, 'hp_' ) === 0 ) || ( in_array( $pagenow, [ 'edit-tags.php', 'term.php' ] ) && strpos( $taxonomy, 'hp_' ) === 0 );
 	}
@@ -275,7 +275,7 @@ final class Admin extends Component {
 	public function register_settings() {
 		global $pagenow;
 
-		if ( 'options.php' === $pagenow || ( 'admin.php' === $pagenow && 'hp_settings' === (string) hp\get_array_value( $_GET, 'page' ) ) ) {
+		if ( 'options.php' === $pagenow || ( 'admin.php' === $pagenow && 'hp_settings' === (string) hp\get_array_value( $_GET, 'page' ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only detects the current admin page, nothing is saved.
 
 			// Get current tab.
 			$tab = hp\get_array_value( hivepress()->get_config( 'settings' ), $this->get_settings_tab() );
@@ -339,7 +339,7 @@ final class Admin extends Component {
 				}
 			}
 
-			if ( 'hp_settings' === hp\get_array_value( $_POST, 'option_page' ) ) {
+			if ( 'hp_settings' === hp\get_array_value( $_POST, 'option_page' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only detects HivePress settings saves to refresh rewrite rules, no data is saved.
 
 				// Refresh permalinks.
 				hivepress()->router->flush_rewrite_rules();
@@ -384,6 +384,9 @@ final class Admin extends Component {
 			// Get permalinks.
 			$permalinks     = (array) get_option( 'hp_permalinks', [] );
 			$new_permalinks = $permalinks;
+
+			// Verify nonce.
+			$is_verified = wp_verify_nonce( hp\get_array_value( $_POST, '_wpnonce' ), 'update-permalink' );
 
 			// Get post types and taxonomies.
 			$types = array_filter(
@@ -433,7 +436,7 @@ final class Admin extends Component {
 					]
 				);
 
-				if ( isset( $_POST[ $field_name ] ) ) {
+				if ( $is_verified && isset( $_POST[ $field_name ] ) ) {
 
 					// Get field value.
 					$field_value = sanitize_title( wp_unslash( $_POST[ $field_name ] ) );
@@ -478,7 +481,7 @@ final class Admin extends Component {
 
 		// Render description.
 		if ( isset( $section['description'] ) ) {
-			echo '<p>' . hp\sanitize_html( $section['description'] ) . '</p>';
+			echo '<p>' . hp\sanitize_html( $section['description'] ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped with wp_kses() in hp\sanitize_html().
 		}
 	}
 
@@ -507,7 +510,7 @@ final class Admin extends Component {
 			$output .= '<div ' . hp\html_attributes( $attributes ) . '>' . $field->render() . '</div>';
 		}
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Field HTML, fields escape their own output.
 	}
 
 	/**
@@ -611,7 +614,7 @@ final class Admin extends Component {
 		$tabs = array_keys( hp\sort_array( hivepress()->get_config( 'settings' ) ) );
 
 		$first_tab   = hp\get_first_array_value( $tabs );
-		$current_tab = hp\get_array_value( $_GET, 'tab', $first_tab );
+		$current_tab = hp\get_array_value( $_GET, 'tab', $first_tab ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only selects the current tab, nothing is saved.
 
 		// Set the default tab.
 		if ( ! in_array( $current_tab, $tabs, true ) ) {
@@ -1087,7 +1090,7 @@ final class Admin extends Component {
 		$tabs = array_keys( $this->get_extensions_tabs() );
 
 		$first_tab   = hp\get_first_array_value( $tabs );
-		$current_tab = hp\get_array_value( $_GET, 'tab', $first_tab );
+		$current_tab = hp\get_array_value( $_GET, 'tab', $first_tab ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only selects the current tab, nothing is saved.
 
 		// Set the default tab.
 		if ( ! in_array( $current_tab, $tabs, true ) ) {
@@ -1189,6 +1192,11 @@ final class Admin extends Component {
 						}
 					}
 
+					// Check capability.
+					if ( isset( $args['_capability'] ) && ! current_user_can( $args['_capability'] ) ) {
+						continue;
+					}
+
 					// Add meta box.
 					$this->meta_boxes[ $name ] = $args;
 				}
@@ -1250,7 +1258,7 @@ final class Admin extends Component {
 		}
 
 		// Check action.
-		if ( hp\get_array_value( $_POST, 'action' ) !== 'editpost' ) {
+		if ( hp\get_array_value( $_POST, 'action' ) !== 'editpost' ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress in post.php before saving the post.
 			return;
 		}
 
@@ -1277,7 +1285,7 @@ final class Admin extends Component {
 				if ( $field && ! $field->is_disabled() ) {
 
 					// Validate field.
-					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) );
+					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress in post.php before saving the post.
 
 					if ( $field->validate() ) {
 
@@ -1437,7 +1445,7 @@ final class Admin extends Component {
 			return $output;
 		}
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Labels escaped with esc_html(), descriptions with wp_kses_post(), fields and blocks escape their own output.
 	}
 
 	/**
@@ -1477,7 +1485,7 @@ final class Admin extends Component {
 	public function update_term_box( $term_id ) {
 
 		// Check quick edit.
-		if ( isset( $_POST['_inline_edit'] ) ) {
+		if ( isset( $_POST['_inline_edit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only detects quick edit requests to skip them.
 			return;
 		}
 
@@ -1502,7 +1510,7 @@ final class Admin extends Component {
 				if ( $field && ! $field->is_disabled() ) {
 
 					// Validate field.
-					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) );
+					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress before saving the term.
 
 					if ( $field->validate() ) {
 
@@ -1628,7 +1636,7 @@ final class Admin extends Component {
 			}
 		}
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Labels escaped with esc_html(), descriptions with wp_kses() in hp\sanitize_html(), fields escape their own output.
 	}
 
 	/**
@@ -1657,7 +1665,7 @@ final class Admin extends Component {
 				if ( $field && ! $field->is_disabled() ) {
 
 					// Validate field.
-					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) );
+					$field->set_value( hp\get_array_value( $_POST, hp\prefix( $field_name ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress in user-edit.php before saving the profile.
 
 					if ( $field->validate() ) {
 
@@ -1766,7 +1774,7 @@ final class Admin extends Component {
 			$output .= '</table>';
 		}
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Titles and labels escaped with esc_html(), descriptions with wp_kses_post(), fields escape their own output.
 	}
 
 	/**
@@ -1895,11 +1903,11 @@ final class Admin extends Component {
 				$product_names = implode( ', ', array_column( $products, 'name' ) );
 
 				$notices[ 'license_request_' . md5( $product_names ) ] = [
-					'type'        => 'error',
+					'type'        => 'warning',
 					'dismissible' => true,
 					'text'        => sprintf(
 						/* translators: 1: settings URL, 2: unlicensed products. */
-						hp\sanitize_html( __( 'Please <a href="%1$s">add the license keys</a> for the installed premium HivePress themes and extensions. The following products without valid licenses are going to be disabled automatically: %2$s.', 'hivepress' ) ),
+						hp\sanitize_html( __( 'Please <a href="%1$s">add the license keys</a> for the installed premium HivePress themes and extensions to keep receiving security and feature updates: %2$s.', 'hivepress' ) ),
 						esc_url( admin_url( 'admin.php?page=hp_settings&tab=integrations' ) ),
 						$product_names
 					),
@@ -2005,7 +2013,7 @@ final class Admin extends Component {
 		}
 
 		// Render settings errors.
-		if ( 'admin.php' === $pagenow && 'hp_settings' === (string) hp\get_array_value( $_GET, 'page' ) ) {
+		if ( 'admin.php' === $pagenow && 'hp_settings' === (string) hp\get_array_value( $_GET, 'page' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only detects the current admin page, nothing is saved.
 			ob_start();
 
 			settings_errors();
@@ -2014,7 +2022,7 @@ final class Admin extends Component {
 			ob_end_clean();
 		}
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Notices escaped with wp_kses() in render_notice(), settings error messages escaped with esc_html() when added.
 	}
 
 	/**
@@ -2129,7 +2137,7 @@ final class Admin extends Component {
 
 		$output .= hivepress()->request->get_context( 'admin_footer' );
 
-		echo $output;
+		echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Modal block HTML, blocks escape their own output.
 	}
 
 	/**
