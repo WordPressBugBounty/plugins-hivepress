@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => '1.8.1',
-        'version' => '1.8.1.0',
-        'reference' => '0cfb071e18ba86ed2f5ec89fe40abf1683f6754b',
+        'pretty_version' => '1.8.2',
+        'version' => '1.8.2.0',
+        'reference' => '4e2d5b552e1c20c25970f3b879733a7b81c01fb0',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => '1.8.1',
-            'version' => '1.8.1.0',
-            'reference' => '0cfb071e18ba86ed2f5ec89fe40abf1683f6754b',
+            'pretty_version' => '1.8.2',
+            'version' => '1.8.2.0',
+            'reference' => '4e2d5b552e1c20c25970f3b879733a7b81c01fb0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -56,9 +56,9 @@
             'dev_requirement' => false,
         ),
         'league/oauth2-google' => array(
-            'pretty_version' => '3.0.4',
-            'version' => '3.0.4.0',
-            'reference' => '6b79441f244040760bed5fdcd092a2bda7cf34c6',
+            'pretty_version' => '4.2.0',
+            'version' => '4.2.0.0',
+            'reference' => '72be69505f890ea8b6d4e716f619b3c10a1f5010',
             'type' => 'library',
             'install_path' => __DIR__ . '/../league/oauth2-google',
             'aliases' => array(),
